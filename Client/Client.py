@@ -7,6 +7,9 @@ SIZE_Y = 30
 SIZE_X = 140
 
 
+# TODO: Add color function
+
+
 class Client(tkinter.Tk):
     def __init__(self, host, port):
         """

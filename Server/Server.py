@@ -7,6 +7,9 @@ from threading import Thread
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
+# TODO: Implement commands
+
+
 def print_to_log(message):
     """
     Methods puts given message into the server.log file
