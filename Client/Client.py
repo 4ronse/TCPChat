@@ -1,6 +1,7 @@
 import socket
 from threading import Thread
 import tkinter
+import ctypes
 
 
 SIZE_Y = 30
@@ -28,8 +29,12 @@ class Client(tkinter.Tk):
 
         self.__sock.connect((host, port))
 
-        # Root window
+        # Set title
         self.title("TCP Chat")
+
+        # Disable resize
+        self.resizable(False, False)
+        remove_resize(self)
 
         # Messages frame
         self.__messages_frame = tkinter.Frame(self)
@@ -103,6 +108,42 @@ class Client(tkinter.Tk):
 
         self.__message.set("/leave")
         self.send_message()
+
+
+def remove_resize(win):
+    """
+    https://stackoverflow.com/a/47867275
+
+    :param tkinter.Tk win:
+    :return:
+    """
+
+    # shortcuts to the WinAPI functionality
+    set_window_pos = ctypes.windll.user32.SetWindowPos
+    set_window_long = ctypes.windll.user32.SetWindowLongPtrW
+    get_window_long = ctypes.windll.user32.GetWindowLongPtrW
+    get_parent = ctypes.windll.user32.GetParent
+
+    # The style we want to get back
+    GWL_STYLE = -16
+
+    # What we want to subtract from that style
+    WS_MINIMIZEBOX = 131072
+    WS_MAXIMIZEBOX = 65536
+
+    hwnd = get_parent(win.winfo_id())
+
+    # get old style
+    old_style = get_window_long(hwnd, GWL_STYLE)
+
+    # new style
+    new_style = old_style & ~ WS_MAXIMIZEBOX & ~ WS_MINIMIZEBOX
+
+    # set new style
+    set_window_long(hwnd, GWL_STYLE, new_style)
+
+    # update non-client area (?)
+    set_window_pos(hwnd, 0, 0, 0, 0, 0, 2 | 1 | 4 | 32)
 
 
 if __name__ == '__main__':
