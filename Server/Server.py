@@ -1,5 +1,6 @@
 import os
 import socket
+from time import sleep
 from datetime import datetime
 from threading import Thread
 
@@ -7,18 +8,16 @@ from threading import Thread
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-# TODO: Implement commands
-
-
-def print_to_log(message):
+def print_to_log(message, path):
     """
     Methods puts given message into the server.log file
     :param str message: debug message
+    :param str path: Path relative to script's folder
     :return:
     """
 
-    with open(os.path.join(ROOT_PATH, 'server.log'), 'a') as log:
-        log.write(datetime.now().strftime("%Y/%m/%d %H:%M:%S") + message + '\n')
+    with open(os.path.join(ROOT_PATH, path), 'a') as log:
+        log.write("[{}] {} \n".format(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), message))
 
 
 def get_motd() -> list:
@@ -32,7 +31,7 @@ def get_motd() -> list:
 
 
 class Server:
-    def __init__(self, addr=('0.0.0.0', 1927), bufsize=1024, save_log=False):
+    def __init__(self, addr=('0.0.0.0', 1927), bufsize=1024, save_log=False, log_path="server.log"):
         """
         Create a new Server Object
 
@@ -41,7 +40,8 @@ class Server:
         :param bool save_log: Save log to server.log
         """
 
-        self.debug = save_log
+        self.save_log = save_log
+        self.log_path = log_path
 
         self.__host = addr[0]
         self.__port = addr[1]
@@ -68,6 +68,7 @@ class Server:
             self.__addresses[c_sock] = c_addr
             self.print("{}:{} has connected".format(c_addr[0], c_addr[1]))
             c_sock.send(b"Welcome!")
+            sleep(0.05)  # Sleep because sockets are ge
             c_sock.send(b"Please enter your name.")
             Thread(target=self.handle_client, args=(c_sock,)).start()
 
@@ -84,6 +85,7 @@ class Server:
             sock.send("Welcome, {}!".format(name).encode())
             for l in get_motd():
                 sock.send(l.encode())
+                sleep(0.05)  # Sleep because sockets are ge
             self.broadcast_message("%s has joined the server." % name, "SERVER")
             self.__clients[sock] = name
 
@@ -123,7 +125,7 @@ class Server:
             msg = '[%s] ' % pre + msg.strip()
 
         self.print(msg)
-            
+
         for sock in self.__clients:
             sock.send(msg.encode())
 
@@ -137,8 +139,8 @@ class Server:
         :return:
         """
 
-        if self.debug:
-            print_to_log(msg)
+        if self.save_log:
+            print_to_log(msg, self.log_path)
         print("[{}] {}".format(datetime.now().strftime("%Y/%m/%d %H:%M:%S"), msg))
 
     def close(self):
