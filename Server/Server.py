@@ -62,15 +62,19 @@ class Server:
 
         :return:
         """
-
         while True:
             c_sock, c_addr = self.__SERVER.accept()
             self.__addresses[c_sock] = c_addr
             self.print("{}:{} has connected".format(c_addr[0], c_addr[1]))
-            c_sock.send(b"Welcome!")
-            sleep(0.05)  # Sleep because sockets are ge
-            c_sock.send(b"Please enter your name.")
-            Thread(target=self.handle_client, args=(c_sock,)).start()
+
+            try:
+                c_sock.send(b"Welcome!")
+                sleep(0.05)  # Sleep because sockets are ge
+                c_sock.send(b"Please enter your name.")
+                Thread(target=self.handle_client, args=(c_sock,)).start()
+            except ConnectionResetError as _:
+                del self.__addresses[c_sock]
+                self.print("{}:{} connection reset".format(c_addr[0], c_addr[1]))
 
     def handle_client(self, sock):
         """

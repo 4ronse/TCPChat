@@ -3,12 +3,66 @@ from threading import Thread
 import tkinter
 import ctypes
 
+THEME = {
+    "mainbackground": "#212121",
+    "mainforeground": "#EEFFFF",
+    "secondarybackground": '#292929',
+    "secondaryforeground": '#f2a365',
+    "button": {
+        "background": '#393939',
+        "foreground": '#EEFFFF'
+    }
+}
 
 SIZE_Y = 30
 SIZE_X = 140
 
 
-# TODO: Add color function
+def disable_resize(win):
+    """
+    https://stackoverflow.com/a/47867275
+
+    :param tkinter.Tk win:
+    :return:
+    """
+
+    # shortcuts to the WinAPI functionality
+    set_window_pos = ctypes.windll.user32.SetWindowPos
+    set_window_long = ctypes.windll.user32.SetWindowLongPtrW
+    get_window_long = ctypes.windll.user32.GetWindowLongPtrW
+    get_parent = ctypes.windll.user32.GetParent
+
+    # The style we want to get back
+    GWL_STYLE = -16
+
+    # What we want to subtract from that style
+    WS_MINIMIZEBOX = 131072
+    WS_MAXIMIZEBOX = 65536
+
+    SWP_NOZORDER = 4
+    SWP_NOMOVE = 2
+    SWP_NOSIZE = 1
+    SWP_FRAMECHANGED = 32
+
+    hwnd = get_parent(win.winfo_id())
+
+    # get old style
+    old_style = get_window_long(hwnd, GWL_STYLE)
+
+    # new style
+    new_style = old_style & ~ WS_MAXIMIZEBOX & ~ WS_MINIMIZEBOX
+
+    # set new style
+    set_window_long(hwnd, GWL_STYLE, new_style)
+
+    # update non-client area (?)
+    set_window_pos(hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+
+
+def get_center_of_screen(master):
+    pos_x = int(master.winfo_screenwidth() / 2 - master.winfo_reqwidth() / 2)
+    pos_y = int(master.winfo_screenheight() / 2 - master.winfo_reqheight() / 2)
+    return "+{}+{}".format(pos_x, pos_y)
 
 
 class Client(tkinter.Tk):
@@ -29,12 +83,12 @@ class Client(tkinter.Tk):
 
         self.__sock.connect((host, port))
 
-        # Set title
+        # Configure Self
         self.title("TCP Chat")
-
-        # Disable resize
+        self.configure(bg=THEME['mainbackground'])
+        self.iconbitmap('olha.ico')
         self.resizable(False, False)
-        remove_resize(self)
+        disable_resize(self)
 
         # Messages frame
         self.__messages_frame = tkinter.Frame(self)
@@ -43,7 +97,10 @@ class Client(tkinter.Tk):
         self.__scrollbar = tkinter.Scrollbar(self.__messages_frame)
 
         # Messages
-        self.__messages_list = tkinter.Listbox(self.__messages_frame, height=SIZE_Y, width=SIZE_X, yscrollcommand=self.__scrollbar.set)
+        self.__messages_list = tkinter.Listbox(self.__messages_frame, height=SIZE_Y, width=SIZE_X,
+                                               yscrollcommand=self.__scrollbar.set,
+                                               bg=THEME['secondarybackground'], fg=THEME['secondaryforeground'])
+        self.__messages_list.bind('<<ListboxSelect>>', lambda event: self.__messages_list.selection_clear(0, tkinter.END))
 
         # Pack everything up
         self.__scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
@@ -57,12 +114,17 @@ class Client(tkinter.Tk):
         # Message entry
         self.__message_entry = tkinter.Entry(self, textvariable=self.__message)
         self.__message_entry.bind('<Return>', self.send_message)
-        self.__message_entry.pack()
+        self.__message_entry.pack(padx=20, pady=20, fill=tkinter.X)
+        self.__message_entry.focus_set()
 
         # Send Button
-        self.__send_button = tkinter.Button(self, text="Send", command=self.send_message)
-        self.__send_button.pack()
+        self.__send_button = tkinter.Button(self, text="Send", command=self.send_message,
+                                            bg=THEME['button']['background'],
+                                            fg=THEME['button']['foreground'],
+                                            borderwidth=0)
+        self.__send_button.pack(pady=10)
 
+        # Window Close event
         self.protocol("WM_DELETE_WINDOW", self.close)
 
     def receive(self):
@@ -76,6 +138,8 @@ class Client(tkinter.Tk):
             while True:
                 data = self.__sock.recv(self.__buff).decode()
                 self.__messages_list.insert(tkinter.END, data)
+                self.__messages_list.yview(tkinter.END)  # Scroll to the end
+
         except ConnectionAbortedError as _:
             self.quit()
 
@@ -110,47 +174,73 @@ class Client(tkinter.Tk):
         self.send_message()
 
 
-def remove_resize(win):
-    """
-    https://stackoverflow.com/a/47867275
+class ServerCredentials(tkinter.Tk):
+    def __init__(self):
+        super().__init__()
 
-    :param tkinter.Tk win:
-    :return:
-    """
+        # Configure Self
+        self.title("Connect to server")
+        self.configure(bg=THEME['mainbackground'])
+        self.iconbitmap('olha.ico')
+        self.geometry(get_center_of_screen(self))
+        self.resizable(False, False)
+        disable_resize(self)
 
-    # shortcuts to the WinAPI functionality
-    set_window_pos = ctypes.windll.user32.SetWindowPos
-    set_window_long = ctypes.windll.user32.SetWindowLongPtrW
-    get_window_long = ctypes.windll.user32.GetWindowLongPtrW
-    get_parent = ctypes.windll.user32.GetParent
+        # String vars
+        self.stringvar_host = tkinter.StringVar()
+        self.stringvar_port = tkinter.StringVar()
 
-    # The style we want to get back
-    GWL_STYLE = -16
+        self.stringvar_host.set('127.0.0.1')
+        self.stringvar_port.set('1927')
 
-    # What we want to subtract from that style
-    WS_MINIMIZEBOX = 131072
-    WS_MAXIMIZEBOX = 65536
+        # Labels
+        tkinter.Label(self, text="Host: ", bg=THEME['mainbackground'], fg=THEME['mainforeground']).grid(row=0, pady=2,
+                                                                                                        padx=2)
+        tkinter.Label(self, text="Port: ", bg=THEME['mainbackground'], fg=THEME['mainforeground']).grid(row=1, pady=2,
+                                                                                                        padx=2)
 
-    hwnd = get_parent(win.winfo_id())
+        # Entries
+        entry_host = tkinter.Entry(self, textvariable=self.stringvar_host)
+        entry_port = tkinter.Entry(self, textvariable=self.stringvar_port)
+        entry_host.grid(row=0, column=1, padx=2)
+        entry_port.grid(row=1, column=1, padx=2)
 
-    # get old style
-    old_style = get_window_long(hwnd, GWL_STYLE)
+        # Set focus on first entry
+        entry_host.focus_set()
 
-    # new style
-    new_style = old_style & ~ WS_MAXIMIZEBOX & ~ WS_MINIMIZEBOX
+        # Bindings
+        def focus_on_port(event):
+            entry_port.focus_set()
 
-    # set new style
-    set_window_long(hwnd, GWL_STYLE, new_style)
+        entry_host.bind('<Return>', focus_on_port)
+        entry_port.bind('<Return>', self.on_submit)
 
-    # update non-client area (?)
-    set_window_pos(hwnd, 0, 0, 0, 0, 0, 2 | 1 | 4 | 32)
+        # Connect button
+        tkinter.Button(self, text="Connect", command=self.on_submit,
+                       bg=THEME['button']['background'],
+                       fg=THEME['button']['foreground'],
+                       borderwidth=0).grid(row=2, column=0, columnspan=3, pady=2)
+
+        # Window Close event
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
+    def close(self, event=None):
+        self.destroy()
+        quit(0)
+
+    def on_submit(self, event=None):
+        self.destroy()
+
+    def get_credentials(self):
+        return self.stringvar_host.get(), self.stringvar_port.get()
 
 
 if __name__ == '__main__':
-    HOST = '127.0.0.1'
-    PORT = 1927
+    connect = ServerCredentials()
+    connect.mainloop()
+    addr = connect.get_credentials()
 
-    client = Client(HOST, PORT)
+    client = Client(addr[0], int(addr[1]))
     recv_thread = Thread(target=client.receive)
     recv_thread.start()
-    tkinter.mainloop()
+    client.mainloop()
