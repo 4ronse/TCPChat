@@ -73,25 +73,8 @@ def set_icon(window):
     :param tkinter.Tk window: the window
     :return:
     """
-
-    if platform.startswith('linux'):
-        # Linux
-        path = '@olha.xbm'
-        pass
-    elif platform.startswith('win32'):
-        # Windows
-        path = 'olha.ico'
-    elif platform.startswith('darwin'):
-        # OSX
-        path = 'olha.icns'
-        pass
-    else:
-        raise Exception('Unknown OS')
-
-    try:
-        window.iconbitmap(path)
-    except tkinter.TclError:
-        print("\033[93mCouldn't set custom icon, {} was not found\033[0m".format(path))
+    photo = tkinter.PhotoImage(file='images/olga.png')
+    window.iconphoto(False, photo)
 
 
 class Client(tkinter.Tk):
