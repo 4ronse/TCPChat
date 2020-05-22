@@ -1,4 +1,5 @@
 import os
+import re
 import socket
 from time import sleep
 from datetime import datetime
@@ -6,6 +7,7 @@ from threading import Thread
 
 
 ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+NICK_REGEX = "^[a-zA-Z0-9\-]{1,16}$"
 
 
 def print_to_log(message, path):
@@ -86,6 +88,11 @@ class Server:
 
         try:
             name = sock.recv(self.__buff).decode().strip()
+
+            while not re.match(NICK_REGEX, name):
+                sock.send(b"Your chosen nick name is either empty, too long or contains invalid characters.")
+                name = sock.recv(self.__buff).decode().strip()
+
             sock.send("Welcome, {}!".format(name).encode())
             for l in get_motd():
                 sock.send(l.encode())
