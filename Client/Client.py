@@ -88,7 +88,10 @@ def set_icon(window):
     else:
         raise Exception('Unknown OS')
 
-    window.iconbitmap(path)
+    try:
+        window.iconbitmap(path)
+    except tkinter.TclError:
+        print("\033[93mCouldn't set custom icon, {} was not found\033[0m".format(path))
 
 
 class Client(tkinter.Tk):
@@ -117,38 +120,39 @@ class Client(tkinter.Tk):
         disable_resize(self)
 
         # Messages frame
-        self.__messages_frame = tkinter.Frame(self)
+        messages_frame = tkinter.Frame(self)
 
         # ScrollBar
-        self.__scrollbar = tkinter.Scrollbar(self.__messages_frame)
+        scrollbar = tkinter.Scrollbar(messages_frame)
 
         # Messages
-        self.__messages_list = tkinter.Listbox(self.__messages_frame, height=SIZE_Y, width=SIZE_X,
-                                               yscrollcommand=self.__scrollbar.set,
+        self.__messages_list = tkinter.Listbox(messages_frame, height=SIZE_Y, width=SIZE_X,
+                                               yscrollcommand=scrollbar.set,
                                                bg=THEME['secondarybackground'], fg=THEME['secondaryforeground'])
-        self.__messages_list.bind('<<ListboxSelect>>', lambda event: self.__messages_list.selection_clear(0, tkinter.END))
+        self.__messages_list.bind('<<ListboxSelect>>',
+                                  lambda event: self.__messages_list.selection_clear(0, tkinter.END))
 
         # Pack everything up
-        self.__scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
         self.__messages_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
         self.__messages_list.pack()
-        self.__messages_frame.pack()
+        messages_frame.pack()
 
         # Message Var
         self.__message = tkinter.StringVar()
 
         # Message entry
-        self.__message_entry = tkinter.Entry(self, textvariable=self.__message)
-        self.__message_entry.bind('<Return>', self.send_message)
-        self.__message_entry.pack(padx=20, pady=20, fill=tkinter.X)
-        self.__message_entry.focus_set()
+        message_entry = tkinter.Entry(self, textvariable=self.__message)
+        message_entry.bind('<Return>', self.send_message)
+        message_entry.pack(padx=20, pady=20, fill=tkinter.X)
+        message_entry.focus_set()
 
         # Send Button
-        self.__send_button = tkinter.Button(self, text="Send", command=self.send_message,
-                                            bg=THEME['button']['background'],
-                                            fg=THEME['button']['foreground'],
-                                            borderwidth=0)
-        self.__send_button.pack(pady=10)
+        send_button = tkinter.Button(self, text="Send", command=self.send_message,
+                                     bg=THEME['button']['background'],
+                                     fg=THEME['button']['foreground'],
+                                     borderwidth=0)
+        send_button.pack(pady=10)
 
         # Window Close event
         self.protocol("WM_DELETE_WINDOW", self.close)
