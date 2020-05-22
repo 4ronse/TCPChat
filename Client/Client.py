@@ -1,5 +1,6 @@
 import socket
 from threading import Thread
+from sys import platform
 import tkinter
 import ctypes
 
@@ -65,6 +66,31 @@ def get_center_of_screen(master):
     return "+{}+{}".format(pos_x, pos_y)
 
 
+def set_icon(window):
+    """
+    Set's icon for given window depending on the os
+
+    :param tkinter.Tk window: the window
+    :return:
+    """
+
+    if platform.startswith('linux'):
+        # Linux
+        path = '@olha.xbm'
+        pass
+    elif platform.startswith('win32'):
+        # Windows
+        path = 'olha.ico'
+    elif platform.startswith('darwin'):
+        # OSX
+        path = 'olha.icns'
+        pass
+    else:
+        raise Exception('Unknown OS')
+
+    window.iconbitmap(path)
+
+
 class Client(tkinter.Tk):
     def __init__(self, host, port):
         """
@@ -86,7 +112,7 @@ class Client(tkinter.Tk):
         # Configure Self
         self.title("TCP Chat")
         self.configure(bg=THEME['mainbackground'])
-        self.iconbitmap('olha.ico')
+        set_icon(self)
         self.resizable(False, False)
         disable_resize(self)
 
@@ -181,7 +207,7 @@ class ServerCredentials(tkinter.Tk):
         # Configure Self
         self.title("Connect to server")
         self.configure(bg=THEME['mainbackground'])
-        self.iconbitmap('olha.ico')
+        set_icon(self)
         self.geometry(get_center_of_screen(self))
         self.resizable(False, False)
         disable_resize(self)
