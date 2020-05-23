@@ -1,7 +1,7 @@
 import socket
 import tkinter
 import ctypes
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 from threading import Thread
 
 THEME = {
@@ -145,7 +145,10 @@ class Client(tkinter.Tk):
         self.geometry(get_center_of_screen(self))
 
         # Put Olga on screen
-        JustForFun()
+        Olga('NE')  # UP RIGHT
+        Olga('SE', flipped=True)  # DOWN RIGHT
+        Olga('NW', mirror=True)  # UP LEFT
+        Olga('SW', flipped=True, mirror=True)  # DOWN LEFT
 
     def receive(self):
         """
@@ -247,7 +250,10 @@ class ServerCredentials(tkinter.Tk):
         self.geometry(get_center_of_screen(self))
 
         # Put Olga on screen
-        JustForFun()
+        Olga('NE')  # UP RIGHT
+        Olga('SE', flipped=True)  # DOWN RIGHT
+        Olga('NW', mirror=True)  # UP LEFT
+        Olga('SW', flipped=True, mirror=True)  # DOWN LEFT
 
     def close(self, event=None):
         self.destroy()
@@ -260,8 +266,8 @@ class ServerCredentials(tkinter.Tk):
         return self.stringvar_host.get(), self.stringvar_port.get()
 
 
-class JustForFun(tkinter.Toplevel):
-    def __init__(self):
+class Olga(tkinter.Toplevel):
+    def __init__(self, pos, flipped=False, mirror=False):
         super().__init__()
 
         # Configure Self
@@ -271,14 +277,33 @@ class JustForFun(tkinter.Toplevel):
         self.overrideredirect(True)
 
         image = Image.open('images/olga.png')
-        image = image.resize((128, 128), Image.ANTIALIAS)
+
+        if mirror:
+            image = ImageOps.mirror(image)
+        if flipped:
+            image = ImageOps.flip(image)
+
+        image = image.resize((256, 256), Image.ANTIALIAS)
         image = ImageTk.PhotoImage(image)
         label = tkinter.Label(self, image=image)
         label.image = image
         label.pack()
 
         self.update_idletasks()
-        self.geometry(f'+{self.winfo_screenwidth() - self.winfo_width()}+0')
+
+        pos = pos.upper()
+        if pos == 'NE':
+            g = f'+{self.winfo_screenwidth() - self.winfo_width()}+0'
+        elif pos == 'SE':
+            g = f'+{self.winfo_screenwidth() - self.winfo_width()}+{self.winfo_screenheight() - self.winfo_height()}'
+        elif pos == 'NW':
+            g = f'+0+0'
+        elif pos == 'SW':
+            g = f'+0+{self.winfo_screenheight() - self.winfo_height()}'
+        else:
+            raise ValueError('Unknown position ' + pos)
+
+        self.geometry(g)
 
 
 if __name__ == '__main__':
