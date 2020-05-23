@@ -145,7 +145,7 @@ class Client(tkinter.Tk):
         self.geometry(get_center_of_screen(self))
 
         # Put Olga on screen
-        # JustForFun()
+        JustForFun()
 
     def receive(self):
         """
@@ -247,7 +247,7 @@ class ServerCredentials(tkinter.Tk):
         self.geometry(get_center_of_screen(self))
 
         # Put Olga on screen
-        # JustForFun()
+        JustForFun()
 
     def close(self, event=None):
         self.destroy()
