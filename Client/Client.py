@@ -1,8 +1,8 @@
 import socket
-from threading import Thread
-from sys import platform
 import tkinter
 import ctypes
+from PIL import Image, ImageTk
+from threading import Thread
 
 THEME = {
     "mainbackground": "#212121",
@@ -61,6 +61,7 @@ def disable_resize(win):
 
 
 def get_center_of_screen(master):
+    master.update_idletasks()
     pos_x = int(master.winfo_screenwidth() / 2 - master.winfo_reqwidth() / 2)
     pos_y = int(master.winfo_screenheight() / 2 - master.winfo_reqheight() / 2)
     return "+{}+{}".format(pos_x, pos_y)
@@ -70,11 +71,11 @@ def set_icon(window):
     """
     Set's icon for given window depending on the os
 
-    :param tkinter.Tk window: the window
+    :param tkinter.Tk | tkinter.Toplevel window: the window
     :return:
     """
-    photo = tkinter.PhotoImage(file='images/olga.png')
-    window.iconphoto(False, photo)
+    photo = ImageTk.PhotoImage(file='images/olga.png', master=window)
+    window.iconphoto(True, photo)
 
 
 class Client(tkinter.Tk):
@@ -140,6 +141,12 @@ class Client(tkinter.Tk):
         # Window Close event
         self.protocol("WM_DELETE_WINDOW", self.close)
 
+        # Geometry
+        self.geometry(get_center_of_screen(self))
+
+        # Put Olga on screen
+        # JustForFun()
+
     def receive(self):
         """
         Receive data sent by the server
@@ -195,7 +202,6 @@ class ServerCredentials(tkinter.Tk):
         self.title("Connect to server")
         self.configure(bg=THEME['mainbackground'])
         set_icon(self)
-        self.geometry(get_center_of_screen(self))
         self.resizable(False, False)
         disable_resize(self)
 
@@ -237,6 +243,12 @@ class ServerCredentials(tkinter.Tk):
         # Window Close event
         self.protocol("WM_DELETE_WINDOW", self.close)
 
+        # Geometry
+        self.geometry(get_center_of_screen(self))
+
+        # Put Olga on screen
+        # JustForFun()
+
     def close(self, event=None):
         self.destroy()
         quit(0)
@@ -246,6 +258,27 @@ class ServerCredentials(tkinter.Tk):
 
     def get_credentials(self):
         return self.stringvar_host.get(), self.stringvar_port.get()
+
+
+class JustForFun(tkinter.Toplevel):
+    def __init__(self):
+        super().__init__()
+
+        # Configure Self
+        self.title("Olha :)")
+        self.configure(bg=THEME['mainbackground'])
+        set_icon(self)
+        self.overrideredirect(True)
+
+        image = Image.open('images/olga.png')
+        image = image.resize((128, 128), Image.ANTIALIAS)
+        image = ImageTk.PhotoImage(image)
+        label = tkinter.Label(self, image=image)
+        label.image = image
+        label.pack()
+
+        self.update_idletasks()
+        self.geometry(f'+{self.winfo_screenwidth() - self.winfo_width()}+0')
 
 
 if __name__ == '__main__':

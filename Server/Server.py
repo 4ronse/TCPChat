@@ -1,7 +1,6 @@
 import os
 import re
 import socket
-from time import sleep
 from datetime import datetime
 from threading import Thread
 
@@ -70,8 +69,7 @@ class Server:
             self.print("{}:{} has connected".format(c_addr[0], c_addr[1]))
 
             try:
-                c_sock.send(b"Welcome!")
-                sleep(0.05)  # Sleep because sockets are ge
+                c_sock.send(b"Welcome! ")
                 c_sock.send(b"Please enter your name.")
                 Thread(target=self.handle_client, args=(c_sock,)).start()
             except ConnectionResetError as _:
@@ -96,7 +94,6 @@ class Server:
             sock.send("Welcome, {}!".format(name).encode())
             for l in get_motd():
                 sock.send(l.encode())
-                sleep(0.05)  # Sleep because sockets are ge
             self.broadcast_message("%s has joined the server." % name, "SERVER")
             self.__clients[sock] = name
 
