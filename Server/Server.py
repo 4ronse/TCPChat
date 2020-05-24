@@ -51,9 +51,9 @@ class Server:
         self.__clients = {}
         self.__addresses = {}
 
-        self.__SERVER = socket.socket()
-        self.__SERVER.bind(addr)
-        self.__SERVER.listen(1)
+        self.__sock = socket.socket()
+        self.__sock.bind(addr)
+        self.__sock.listen(1)
         print(str(self))
         print()
 
@@ -64,7 +64,7 @@ class Server:
         :return:
         """
         while True:
-            c_sock, c_addr = self.__SERVER.accept()
+            c_sock, c_addr = self.__sock.accept()
             self.__addresses[c_sock] = c_addr
             self.print("{}:{} has connected".format(c_addr[0], c_addr[1]))
 
@@ -158,7 +158,7 @@ class Server:
         :return:
         """
         self.broadcast_message("Server is closing", "SERVER")
-        self.__SERVER.close()
+        self.__sock.close()
 
     def __str__(self):
         out = 'Server ['
