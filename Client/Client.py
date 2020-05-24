@@ -3,15 +3,16 @@ import tkinter
 import ctypes
 from PIL import Image, ImageTk, ImageOps
 from threading import Thread
+from colorama import Fore, Back, Style, init
 
 THEME = {
     "mainbackground": "#212121",
     "mainforeground": "#EEFFFF",
-    "secondarybackground": '#292929',
-    "secondaryforeground": '#f2a365',
+    "secondarybackground": "#292929",
+    "secondaryforeground": "#f2a365",
     "button": {
-        "background": '#393939',
-        "foreground": '#EEFFFF'
+        "background": "#393939",
+        "foreground": "#EEFFFF"
     }
 }
 
@@ -160,6 +161,7 @@ class Client(tkinter.Tk):
         try:
             while True:
                 data = self.__sock.recv(self.__buff).decode()
+                print(f"{Fore.CYAN}{data}{Style.RESET_ALL}")
                 self.__messages_list.insert(tkinter.END, data)
                 self.__messages_list.yview(tkinter.END)  # Scroll to the end
 
@@ -175,7 +177,6 @@ class Client(tkinter.Tk):
         """
 
         msg = self.__message.get().strip()
-        print('Trying to send "%s"' % msg)
         if msg == '':
             return
         self.__message.set("")
@@ -276,19 +277,28 @@ class Olga(tkinter.Toplevel):
         set_icon(self)
         self.overrideredirect(True)
 
-        image = Image.open('images/olga.png')
+        # Disable Alt-F4
+        def alt_f4_press_event(event):
+            self.alt_f4 = True
+        self.alt_f4 = False
+        self.bind('<Alt-F4>', alt_f4_press_event)
+        self.protocol("WM_DELETE_WINDOW", self.close)
 
-        if mirror:
+        # Image operations
+        image = Image.open('images/olga.png')  # Import image
+
+        if mirror:  # Mirror if requested
             image = ImageOps.mirror(image)
-        if flipped:
+        if flipped:  # Flip if requested
             image = ImageOps.flip(image)
 
-        image = image.resize((256, 256), Image.ANTIALIAS)
-        image = ImageTk.PhotoImage(image)
+        image = image.resize((256, 256), Image.ANTIALIAS)  # Resize image
+        image = ImageTk.PhotoImage(image)  # Translate image for tkinter cause he a lil dumb
         label = tkinter.Label(self, image=image)
         label.image = image
         label.pack()
 
+        # Margin
         self.update_idletasks()
 
         pos = pos.upper()
@@ -305,8 +315,17 @@ class Olga(tkinter.Toplevel):
 
         self.geometry(g)
 
+    def close(self, event=None):
+        if self.alt_f4:
+            self.alt_f4 = False
+            print('Alt-F4 Detected')
+        else:
+            self.destroy()
+
 
 if __name__ == '__main__':
+    init()
+
     connect = ServerCredentials()
     connect.mainloop()
     addr = connect.get_credentials()
